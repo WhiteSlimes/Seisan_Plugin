@@ -28,7 +28,7 @@ public class ChatFormat extends Feature {
     private static List<String> PREFIX;
 
     // Map of player to list their message ending with > to send everything at once
-    private static Map<Player, TextComponent[]> halfWrittenMessage = new HashMap<>();
+    private static Map<Player, String> halfWrittenMessage = new HashMap<>();
 
     private static void addPrefix(String prefix) {
         PREFIX.add(prefix);
@@ -101,9 +101,28 @@ public class ChatFormat extends Feature {
             public void execute(Listener listener, Event event) throws EventException {
                 AsyncPlayerChatEvent chatEvent = (AsyncPlayerChatEvent) event;
                 Player player = chatEvent.getPlayer();
-                if (innerChatFormater.isGoodPrefix(chatEvent)) {
+
+                // If message ends with ">", we store it in a map to send it all at once
+                String message = chatEvent.getMessage();
+                if (message.endsWith(">")) {
+                    if (halfWrittenMessage.containsKey(chatEvent.getPlayer())) {
+                        // Remove the ">" at the end of the message
+                        halfWrittenMessage.put(chatEvent.getPlayer(), halfWrittenMessage.get(chatEvent.getPlayer()) + " " + chatEvent.getMessage().substring(0, chatEvent.getMessage().length() - 1));
+                    } else {
+                        halfWrittenMessage.put(chatEvent.getPlayer(), chatEvent.getMessage().substring(0, chatEvent.getMessage().length() - 1));
+                    }
                     chatEvent.setCancelled(true);
-                    FormatedMessageSender.send(innerChatFormater.formatMessage(chatEvent));
+                } else {
+                    if (halfWrittenMessage.containsKey(chatEvent.getPlayer())) {
+                        message = halfWrittenMessage.get(chatEvent.getPlayer()) + " " + chatEvent.getMessage();
+                        halfWrittenMessage.remove(chatEvent.getPlayer());
+                        chatEvent.setMessage(message);
+                    }
+
+                    if (innerChatFormater.isGoodPrefix(chatEvent)) {
+                        chatEvent.setCancelled(true);
+                        FormatedMessageSender.send(innerChatFormater.formatMessage(chatEvent));
+                    }
                 }
             }
         };
@@ -611,6 +630,7 @@ public class ChatFormat extends Feature {
             if (message.startsWith(" ")) {
                 message = message.substring(1);
             }
+
             event.setMessage(message);
             MutableMeta mutableMeta = new MutableMeta();
             if (meta.isTargetAdded()) {
@@ -749,8 +769,7 @@ public class ChatFormat extends Feature {
     }
 
     private static class FormatedMessageSender {
-        private static void send(FormatedMessage formatedMessage) //Mira Anchor (Fonction principale)
-        {
+        private static void send(FormatedMessage formatedMessage) {
             AsyncPlayerChatEvent event = formatedMessage.getEvent();
             TextComponent[] arrayMessage = formatedMessage.getComponents();
             TextComponent[] arrayMessageNoItalic = new TextComponent[formatedMessage.getComponents().length];
@@ -839,32 +858,8 @@ public class ChatFormat extends Feature {
                     }
                     if (suitable && (meta.isForEveryWorld() || p.getLocation().distanceSquared(location) < rangeSquared)) {
                         PlayerConfig pconfig = PlayerConfig.getPlayerConfig(p);
-                        if (pconfig.isChangechat()) { // Mira anchor : Envoie des messages finis aux joueurs ici
-
-                            // Create variable that is the merged message of halfWrittenMessage and the new one
-                            if (halfWrittenMessage.containsKey(p)) {
-                                // Merge older message from halfWrittenMessage with the new one
-                                TextComponent[] oldArray = halfWrittenMessage.get(p);
-                                TextComponent[] newArray = new TextComponent[oldArray.length + arrayMessage.length];
-                                System.arraycopy(oldArray, 0, newArray, 0, oldArray.length);
-                                System.arraycopy(arrayMessage, 0, newArray, oldArray.length, arrayMessage.length);
-                                // If message ends with >, save it in halfWrittenMessage
-                                if (arrayMessage[arrayMessage.length - 1].getText().endsWith(">")) {
-                                    halfWrittenMessage.put(p, newArray);
-                                } else {
-                                    // Send the message
-                                    p.spigot().sendMessage(newArray);
-                                }
-                            } else {
-                                // If message ends with >, save it in halfWrittenMessage
-                                if (arrayMessage[arrayMessage.length - 1].getText().endsWith(">")) {
-                                    halfWrittenMessage.put(p, arrayMessage);
-                                } else {
-                                    // Send the message
-                                    p.spigot().sendMessage(arrayMessage);
-                                }
-                            }
-                            // p.spigot().sendMessage(arrayMessageNoItalic);
+                        if (pconfig.isChangechat()) {
+                            p.spigot().sendMessage(arrayMessageNoItalic);
                         } else {
                             p.spigot().sendMessage(arrayMessage);
                         }
