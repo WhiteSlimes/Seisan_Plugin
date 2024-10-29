@@ -26,7 +26,7 @@ public class CloneListener extends Feature {
         PlayerInfo pInfo = PlayerInfo.getPlayerInfo(p);
 
         if(npc.getTrait(Controllable.class).isEnabled() && !pInfo.getPlayerClone().own(npc)){
-            p.sendMessage(ChatColor.RED + "Vous ne pouvez pas controler un clone qui ne vous appartient pas !");
+//            p.sendMessage(ChatColor.RED + "Vous ne pouvez pas controler un clone qui ne vous appartient pas !");
             Location loc = p.getLocation();
 
             if(npc.getEntity() instanceof Player) {
@@ -43,10 +43,6 @@ public class CloneListener extends Feature {
 
             // Il a pas la compétence
             if(!pInfo.hasAbility("meditation_ouverte")) {
-                return;
-            }
-
-            if (pInfo.getTicketmedit() == 0) {
                 return;
             }
 

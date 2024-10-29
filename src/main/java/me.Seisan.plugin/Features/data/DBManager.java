@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.logging.Level;
 
 
 public class DBManager {
@@ -46,17 +47,18 @@ public class DBManager {
             String user = cfg.getString("user");
             String password = cfg.getString("password");
             String database = cfg.getString("database");
-            String sqlhost = "jdbc:mysql://" + host + ":" + port + "/" + database + "?verifyServerCertificate=false&useSSL=true";
-
+            String sqlhost = "jdbc:mysql://" + host + ":" + port + "/" + database + "?verifyServerCertificate=false&useSSL=true&characterEncoding=utf8";
+            
+            Bukkit.getLogger().log(Level.FINE, "Connexion à la base de données réussie.");
             this.connection = DriverManager.getConnection(sqlhost, user, password);
         } catch (SQLException e) {
-            System.out.println("[SeisanPlugin] Une erreur de connection à la base de données est survenue.");
+            Bukkit.getLogger().log(Level.SEVERE, "Une erreur de connection à la base de données est survenue.");
             Bukkit.getServer().shutdown();
             e.printStackTrace();
         }
     /*
         for (PlayerInfo pInfo : PlayerInfo.getInstanceList().values()) {
-            System.out.println("[SeisanPlugin] Sauvegarde des données de "+pInfo.getPlayer().getName());
+            Main.LOG.info("Sauvegarde des données de "+pInfo.getPlayer().getName());
             playerDB.updatePlayer(pInfo);
         }
     */
@@ -76,7 +78,7 @@ public class DBManager {
     }
 
     public void refreshConnection(){
-        System.out.println("[Seisan_Plugin] Refresh de la connexion à la base de données.");
+        Main.LOG.info("Refresh de la connexion à la base de données.");
         try {
             if (isConnected()) {
                 disconnect();

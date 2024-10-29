@@ -8,10 +8,8 @@ import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.UUID;
+
+import java.util.*;
 
 public class Commands extends Feature {
     public static ArrayList<String> param = new ArrayList<>();
@@ -24,7 +22,6 @@ public class Commands extends Feature {
     protected void doRegister() {
         new ChatMasterCommand().register();
         new RollCommand().register();
-        new RollResistanceCommand().register();
         new EncaCommand().register();
         new NickCommand().register();
         random = new Random(System.nanoTime());
@@ -48,7 +45,11 @@ public class Commands extends Feature {
         new HRPCommand().register();
         new JumpUpDownCommand().register();
         new WarpCommand().register();
-
+        new PrefixCommand().register();
+        new TechniqueMJCommand().register();
+        new PriereCommand().register();
+        new ConversionCommand().register();
+        new HideLanguageCommand().register();
         param.add("add");
         param.add("remove");
 
@@ -58,7 +59,6 @@ public class Commands extends Feature {
         phraseantonin.add("T'es trop un roleplayer d'élite");
         phraseantonin.add("Merci pour tout ce que tu fais pour le serveur");
         phraseantonin.add("T'es trop beau et c'est pas un avis porter sur la rage ?");
-        phraseantonin.add("Kyrb est giga dep mais je te jure qu'il est cool en vrai");
     }
 
 
@@ -69,18 +69,16 @@ public class Commands extends Feature {
 
     public static void playerVanish(PlayerConfig pConfig) {
         String s;
-        if(pConfig.isVanish()) {
+        if (pConfig.isVanish()) {
             Main.plugin().getServer().getOnlinePlayers().forEach((p) -> {
-                if (!p.isOp())
-                {
+                if (!p.isOp()) {
                     p.hidePlayer(Main.plugin(), pConfig.getPlayer());
                 }
             });
             pConfig.getPlayer().sendMessage("§cHRP : §7Flouf, vous disparaissez.");
             pConfig.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 200000, 2, false, false));
             s = "[V] " + pConfig.getPlayer().getDisplayName();
-        }
-        else {
+        } else {
             pConfig.getPlayer().sendMessage("§cHRP : §7Pouf, vous apparaissez.");
             pConfig.getPlayer().removePotionEffect(PotionEffectType.NIGHT_VISION);
             Main.plugin().getServer().getOnlinePlayers().forEach((p) -> p.showPlayer(Main.plugin(), pConfig.getPlayer()));

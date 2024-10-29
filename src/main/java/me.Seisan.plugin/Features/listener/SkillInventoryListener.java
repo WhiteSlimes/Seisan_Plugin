@@ -75,7 +75,6 @@ public class SkillInventoryListener extends Feature {
                     return;
                 }
 
-
                 if (inv.getItem(slot) != null) {
                     if (e.getClickedInventory().getType() == InventoryType.CHEST) {
                         String skillName = inv.getItem(slot).getItemMeta().getDisplayName();
@@ -85,26 +84,6 @@ public class SkillInventoryListener extends Feature {
                         }
                     }
                 }
-            }
-        }else if(e.getClickedInventory() != null && e.getView().getTitle().startsWith("§8HRP : §7Don")) {
-            if (!(e.getWhoClicked() instanceof Player)) {
-                return;
-            }
-            e.setCancelled(true);
-            Player p = (Player) e.getWhoClicked();
-            int slot = e.getSlot();
-            if(slot >= 0 && slot < 27) {
-                Inventory inv = e.getClickedInventory();
-                if(e.getClickedInventory().getType() != InventoryType.CHEST) {
-                    return;
-                }
-                ItemStack item = inv.getItem(slot);
-                if(item == null || item.getType() == Material.AIR) {
-                    return;
-                }
-                p.getInventory().addItem(item);
-                p.sendMessage("§cHRP : §7Vous vous êtes give un item du /hrp. Attention aux abus !");
-                p.closeInventory();
             }
         }else if(e.getClickedInventory() != null && e.getView().getTitle().startsWith("§8HRP : §7Poubelle")) {
             if (!(e.getWhoClicked() instanceof Player)) {
@@ -160,11 +139,13 @@ public class SkillInventoryListener extends Feature {
                                                 skill.takeMana(pInfo);
 
 
-                                                String message = "§7[Une main] §c** " + p.getDisplayName() + " §r§créalise la technique "+skillName;
+                                                String message = "§7[Une main] §c** " + p.getDisplayName() + " §r§créalise la technique ";
+
                                                 int range = 50;
 
                                                 TextComponent messagecomponent = new TextComponent(message);
-                                                Skill.affichejutsu(p, pInfo, range, messagecomponent, ItemUtil.createItemStack(Material.BOOK, 1, skillName, skill.getLore(p)), skill.isSkillVisibility(), skill.isNeedTarget(), pInfo.getTarget());
+                                                TextComponent techniquecomponent = new TextComponent(skillName);
+                                                Skill.affichejutsu(p, pInfo, range, messagecomponent, techniquecomponent, ItemUtil.createItemStack(Material.BOOK, 1, skillName, skill.getLore(p)), skill.isSkillVisibility(), skill.isNeedTarget(), pInfo.getTarget());
 
                                                 //Lancement de la technique
                                                 ArrayList<String> commandToRun = skill.getCommandList();
@@ -347,7 +328,7 @@ public class SkillInventoryListener extends Feature {
         switch(targetInfo.getRank().id) {
             case 2:
                 // La cible est un Chuunin
-                webhook = new DiscordWebhook("https://discord.com/api/webhooks/969326292635902002/8KJhFrXl3YrkYtThWU9HOfxvZNp-TMc9z12C60NJrbIXgQ5tZhbR5i9VI-NZnUXzkEPJ");
+                webhook = new DiscordWebhook("");
                 break;
             case 3:
             case 4:
@@ -355,12 +336,12 @@ public class SkillInventoryListener extends Feature {
                 // La cible est un Juunin ou
                 // La cible est un Sannin ou
                 // La cible est un(e) chef(fe) de village
-                webhook = new DiscordWebhook("https://discord.com/api/webhooks/969326562279317535/bjUbAIp3YgvO6MF7vNIkOFwFAnd2Tb7iv2EDhTT2N_YgJ3i3Dt_uIpjZ3XDtBNkD-UE5");
+                webhook = new DiscordWebhook("");
                 break;
             default:
                 // La cible est un(e) étudiant(e) ou
                 // La cible est un Genin
-                webhook = new DiscordWebhook("https://discord.com/api/webhooks/968955265019961364/c6YAnhHgEvq-ilqQUk5D71dr5MQsGxnoxTneKKikbazCnZHg3WsDHiJ9kBOycg1CzADu");
+                webhook = new DiscordWebhook("");
                 break;
         }
         webhook.setContent(ChatColor.stripColor(target.getDisplayName())+" (`"+target.getName()+"`) : "+skill.getLevel().getName()+" - "+ChatColor.stripColor(skill.getName())+" - "+ dtf.format(now));
@@ -372,5 +353,4 @@ public class SkillInventoryListener extends Feature {
             e.printStackTrace();
         }
     }
-
 }

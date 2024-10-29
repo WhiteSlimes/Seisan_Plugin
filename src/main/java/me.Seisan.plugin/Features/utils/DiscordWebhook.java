@@ -1,5 +1,7 @@
 package me.Seisan.plugin.Features.utils;
 
+import me.Seisan.plugin.Features.data.Config;
+
 import javax.net.ssl.HttpsURLConnection;
 import java.awt.Color;
 import java.io.IOException;
@@ -13,12 +15,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static io.netty.util.CharsetUtil.UTF_8;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Class used to execute Discord Webhooks with low effort
  */
 public class DiscordWebhook {
+    public static Config webhookConfig = new Config("webhook.yml");
 
     private final String url;
     private String content;

@@ -1,7 +1,7 @@
 package me.Seisan.plugin.Features.commands.others;
 
 import me.Seisan.plugin.Features.PlayerData.PlayerInfo;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.ChatColor;
 import me.Seisan.plugin.Main.Command;
 
@@ -25,6 +25,10 @@ public class TransferCommand extends Command {
 
                 if (StringUtils.isNumeric(split[0])) {
                     int amout = Integer.parseInt(split[0]);
+                    if(senderInfo.getMana() < amout){
+                        sender.sendMessage(ChatColor.RED + "Vous n'avez pas assez de chakra !");
+                        return;
+                    }
                     senderInfo.removeMana(amout);
                     targetInfo.addMana(amout);
                     String message = ChatColor.BLUE + "** " + ((Player) sender).getDisplayName() + ChatColor.BLUE + " transfère " + ChatColor.GOLD + amout + ChatColor.BLUE + " de chakra à " + target.getDisplayName() + ChatColor.BLUE + " ! **";

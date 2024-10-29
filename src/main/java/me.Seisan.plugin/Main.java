@@ -1,21 +1,22 @@
 package me.Seisan.plugin;
 
 
-
+import me.Seisan.plugin.Features.ability.AbilityLoaderDB;
 import lombok.Getter;
 import me.Seisan.plugin.Features.Chat.ChatFormat;
 import me.Seisan.plugin.Features.PlayerData.PlayerClone;
 import me.Seisan.plugin.Features.PlayerData.PlayerInfo;
 import me.Seisan.plugin.Features.ability.Ability;
-import me.Seisan.plugin.Features.ability.AbilityLoader;
 import me.Seisan.plugin.Features.commands.anothers.Commands;
 import me.Seisan.plugin.Features.commands.others.OthersCommandRegister;
 import me.Seisan.plugin.Features.commands.profil.ProfilRegister;
+import me.Seisan.plugin.Features.data.ClansDB;
 import me.Seisan.plugin.Features.data.DBManager;
+import me.Seisan.plugin.Features.data.NinjaArtsDB;
+import me.Seisan.plugin.Features.objectnum.Clan;
+import me.Seisan.plugin.Features.skill.TechniquesLoaderDB;
 import me.Seisan.plugin.Features.listener.Listener;
-import me.Seisan.plugin.Features.routines.Routines;
 import me.Seisan.plugin.Features.skill.Skill;
-import me.Seisan.plugin.Features.skill.SkillLoader;
 import me.Seisan.plugin.Features.utils.Channel;
 import net.citizensnpcs.api.npc.NPC;
 import org.bukkit.Bukkit;
@@ -60,7 +61,7 @@ public class Main extends JavaPlugin {
     public static HashMap<String, PlayerInfo> ficheMJ = new HashMap<>();
 
     @Getter
-    public static HashMap<String, Integer> inMedit = new HashMap<>();
+    public static List<String> inMedit = new ArrayList<>();
 
     @Getter
     public static HashMap<String, String> inBulleMedit = new HashMap<>();
@@ -78,7 +79,6 @@ public class Main extends JavaPlugin {
     public static HashMap<String, Location> isJumping = new HashMap<>();
 
 
-
     private void setupManaLoop() {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
             for (PlayerInfo pInfo : PlayerInfo.getInstanceList().values()) {
@@ -91,13 +91,12 @@ public class Main extends JavaPlugin {
 
     private static void regenMana(PlayerInfo pInfo) {
         Player p = pInfo.getPlayer();
-        float progression = p.getExp() + (1/60f * (pInfo.getMaxMana() / 100f));
-        if(progression >= 1.0f) {
+        float progression = p.getExp() + (1 / 60f * (pInfo.getMaxMana() / 100f));
+        if (progression >= 1.0f) {
             progression = Math.min(progression, 1.99f);
-            p.setExp(progression-1.0f);
+            p.setExp(progression - 1.0f);
             pInfo.addMana(1);
-        }
-        else {
+        } else {
             p.setExp(progression);
         }
     }
@@ -105,7 +104,8 @@ public class Main extends JavaPlugin {
     public static Main plugin() {
         return Main.getPlugin(Main.class);
     }
-    private static Logger LOG;
+
+    public static Logger LOG;
     public static FileConfiguration CONFIG;
 
     private static List<String> CURR_CONFIG_PATH;
@@ -138,8 +138,7 @@ public class Main extends JavaPlugin {
         LOG.info("--- Seisan plugin  disabled ---");
     }
 
-    public void setupConfiguration()
-    {
+    public void setupConfiguration() {
         CONFIG = this.getConfig();
         LOG = this.getLogger();
         CONFIG.options().copyDefaults(true);
@@ -149,16 +148,15 @@ public class Main extends JavaPlugin {
 
     }
 
-    private void registerFeatures()
-    {
+    private void registerFeatures() {
         new Channel().register();
         new Listener().register();
         new ChatFormat().register();
         new Commands().register();
         new ProfilRegister().register();
         new OthersCommandRegister().register();
-        new Routines().register();
-        System.out.println("---> Enabling SeisanPlugin <---");
+//        new Routines().register();
+        LOG.info("---> Enabling SeisanPluginForNinkai <---");
         serverOpen = true;
         spigotLogger = Bukkit.getLogger();
 
@@ -167,11 +165,14 @@ public class Main extends JavaPlugin {
         dbManager.getConnection();
         PlayerClone.init();
 
-        spigotLogger.info("Loading jutsu & compétences...");
-        SkillLoader.loadSkillsFromConfig();
-        AbilityLoader.loadAbilitiesFromConfig();
+        spigotLogger.info("Loading clans, jutsus & abilities...");
+        ClansDB.loadAllClansFromDB();
+        NinjaArtsDB.loadAllNinjaArtsFromDB();
+        TechniquesLoaderDB.LoadAllTechniquesFromDB();
+        AbilityLoaderDB.loadAllAbilitiesFromDB();
         spigotLogger.info(Ability.instanceList.size() + " abilities have been loaded !");
         spigotLogger.info(Skill.getInstanceList().size() + " jutsu have been loaded !");
+        spigotLogger.info(Clan.allClans.size() + " clans have been loaded !");
 
         setupManaLoop();
         dbManager.getPlayerDB().loadPlayerFiche();
@@ -179,25 +180,21 @@ public class Main extends JavaPlugin {
         spigotLogger.info("---> SeisanPlugin enabled <---");
     }
 
-    public void notifyEnd()
-    {
+    public void notifyEnd() {
         saveConfig();
         PluginDescriptionFile pdfFile = this.getDescription();
         LOG.log(Level.INFO, "ChatPlugin (v{0}) successfully loaded.", pdfFile.getVersion());
     }
 
-    public static String buildConfigCurrentPath()
-    {
+    public static String buildConfigCurrentPath() {
         StringBuilder b = new StringBuilder();
-        for(String s : CURR_CONFIG_PATH)
-        {
+        for (String s : CURR_CONFIG_PATH) {
             b.append(s).append('.');
         }
         return b.toString();
     }
 
-    public static String initConfigFor(String name)
-    {
+    public static String initConfigFor(String name) {
         CURR_CONFIG_PATH.add(name);
         CURR_CONFIG_DEPTH++;
         String path = buildConfigCurrentPath();
@@ -206,70 +203,60 @@ public class Main extends JavaPlugin {
 
     }
 
-    public static boolean isActivated(String path)
-    {
+    public static boolean isActivated(String path) {
         return CONFIG.getBoolean(path + ".activated");
     }
 
-    public static void exitConfigFor()
-    {
-        CURR_CONFIG_PATH.remove(CURR_CONFIG_PATH.size()-1);
+    public static void exitConfigFor() {
+        CURR_CONFIG_PATH.remove(CURR_CONFIG_PATH.size() - 1);
         CURR_CONFIG_DEPTH--;
     }
 
-    public static void addConfig(String s, Object value, String path)
-    {
+    public static void addConfig(String s, Object value, String path) {
         CONFIG.addDefault(path + s, value);
         configMap.put(path + s, CONFIG.get(path + s));
     }
 
-    public static Object getConfig(String s, String path)
-    {
+    public static Object getConfig(String s, String path) {
         return configMap.get(path + s);
     }
 
-    public static void log(Level level, String log)
-    {
+    public static void log(Level level, String log) {
         StringBuilder b = new StringBuilder();
-        for(int i = 0; i< CURR_CONFIG_DEPTH-1; i++, b.append("  ")){}
+        for (int i = 0; i < CURR_CONFIG_DEPTH - 1; i++, b.append("  ")) {
+        }
         b.append("- ").append(log);
         LOG.log(level, b.toString());
     }
 
-    public static void log(Level level, String log, int margin)
-    {
+    public static void log(Level level, String log, int margin) {
         StringBuilder b = new StringBuilder();
-        for(int i = 0; i< CURR_CONFIG_DEPTH-1+margin; i++, b.append("  ")){}
+        for (int i = 0; i < CURR_CONFIG_DEPTH - 1 + margin; i++, b.append("  ")) {
+        }
         b.append("- ").append(log);
         LOG.log(level, b.toString());
     }
 
-    public static abstract class Command
-    {
+    public static abstract class Command {
         protected final PluginCommand command;
         protected String commandName;
         protected int index;
         protected final String path;
 
-        protected Command()
-        {
+        protected Command() {
             commandName = getClass().getSimpleName();
-            commandName = commandName.toLowerCase().substring(0, commandName.length()-Command.class.getSimpleName().length() );
+            commandName = commandName.toLowerCase().substring(0, commandName.length() - Command.class.getSimpleName().length());
             this.command = Main.plugin().getCommand(commandName);
             this.index = 0;
             path = Main.initConfigFor(commandName);
         }
 
-        public void register()
-        {
-            if(Main.isActivated(path))
-            {
+        public void register() {
+            if (Main.isActivated(path)) {
                 this.command.setExecutor(this.getExecutor());
                 this.command.setTabCompleter(this.getTabCompleter());
                 Main.log(Level.INFO, "Enabled command " + this.command.getName());
-            }
-            else
-            {
+            } else {
                 this.command.setExecutor(new DisabledCommand());
                 this.command.setTabCompleter(new DisabledCompleter());
                 Main.log(Level.INFO, "Disabled command " + this.command.getName());
@@ -277,11 +264,9 @@ public class Main extends JavaPlugin {
             Main.exitConfigFor();
         }
 
-        private CommandExecutor getExecutor()
-        {
+        private CommandExecutor getExecutor() {
             return (sender, command, label, args) -> {
-                if (!sender.isOp() && Command.this.isOpOnly())
-                {
+                if (!sender.isOp() && Command.this.isOpOnly()) {
                     sender.sendMessage("§cHRP : Commande pour les OPs seulement.");
                     return true;
                 }
@@ -290,46 +275,45 @@ public class Main extends JavaPlugin {
             };
         }
 
-        private TabCompleter getTabCompleter()
-        {
+        private TabCompleter getTabCompleter() {
             return (sender, command, alias, args) -> {
-                if (!sender.isOp() && Command.this.isOpOnly())
-                {
+                if (!sender.isOp() && Command.this.isOpOnly()) {
                     return new ArrayList<>();
                 }
                 return Command.this.myOnTabComplete(sender, command, alias, args);
             };
         }
 
-        protected void complete(List<String> completion, String target, String arg)
-        {
-            if(target.toLowerCase().startsWith(arg.toLowerCase()))
-            {
+        protected void complete(List<String> completion, String target, String arg) {
+            if (target.toLowerCase().startsWith(arg.toLowerCase())) {
                 completion.add(target);
             }
         }
 
-        protected boolean isOpOnly() { return true; }
+        protected boolean isOpOnly() {
+            return true;
+        }
 
-        public static class DisabledCompleter implements TabCompleter
-        {
-            public DisabledCompleter(){}
-            public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command command, String alias, String[] args)
-            {
+        public static class DisabledCompleter implements TabCompleter {
+            public DisabledCompleter() {
+            }
+
+            public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command command, String alias, String[] args) {
                 return new ArrayList();
             }
         }
 
-        public static class DisabledCommand implements CommandExecutor
-        {
-            public DisabledCommand(){}
-            public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args)
-            {
+        public static class DisabledCommand implements CommandExecutor {
+            public DisabledCommand() {
+            }
+
+            public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
                 return true;
             }
         }
 
         protected abstract void myOnCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] split);
+
         protected abstract List<String> myOnTabComplete(CommandSender sender, org.bukkit.command.Command command, String label, String[] split);
 
     }
